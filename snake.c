@@ -137,15 +137,17 @@ void advanceSnake(Vector* snake, Direction direction)
 	popOffVector(snake);
 
 
-	// Aaaaaaand draw
+	// Draw new head
 	mvaddch(new_pos.y, new_pos.x, SNAKE_HEAD);
-	for(int i=1;i<snake->length;i++)
+
+	// And new neck
+	if(snake->length > 1)
 	{
-		Point* p = accessVector(snake, i);
-		Point* prev_p = accessVector(snake, i-1);
-		mvaddch(p->y, p->x,
-				// Display a different character based on going vertically or horizontally
-				(p->x == prev_p->x)?  '|':'-');
+		Point* p = accessVector(snake, 1);
+		Point* prev_p = accessVector(snake, 0);
+		// Display a different character based on going vertically or
+		// horizontally
+		mvaddch(p->y, p->x, (p->x == prev_p->x)?  '|':'-');
 						
 	}
 	refresh();
