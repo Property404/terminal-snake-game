@@ -1,7 +1,12 @@
 #pragma once
 
 // Represents direction something is headed on screen
-typedef enum {UP, DOWN, LEFT, RIGHT} Direction;
+// Properties:
+// 	* abs values of vertical directions are 1
+//  * abs values of horizontal directions are 2
+// 	* UP = -DOWN and vice versa
+// 	* LEFT = -RIGHT and vice versa
+typedef enum {UP = -1, DOWN = 1, LEFT = -2, RIGHT = 2} Direction;
 
 // Represents a point on the screen in terms of X, Y
 typedef struct {int x; int y;} Point;
