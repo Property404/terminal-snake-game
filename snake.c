@@ -27,6 +27,22 @@ int findPointInVector(Vector* v, Point* p)
 	return -1;
 }
 
+void mapKeyToDirection(int key, Direction* direction)
+{
+	const Direction directions[] =
+	{DOWN, UP, LEFT, RIGHT};
+	const int index = key - KEY_DOWN;
+	if (index > 3 || index < 0)
+	{
+		fprintf(stderr, "Out of bounds in mapKeyToDirection()\n");
+		exit(1);
+	}
+	Direction new_direction = directions[index];
+	if(*direction == -new_direction)
+		return;
+	*direction = new_direction;
+}
+
 // Move (and draw) snake in specific direction
 void advanceSnake(Vector* snake, Direction direction);
 
@@ -52,19 +68,14 @@ int main()
 	while(true)
 	{
 		timeout(0);
-		switch(getch())
+		int c = getch();
+		switch(c)
 		{
 			case KEY_UP:
-				direction = UP;
-				break;
 			case KEY_RIGHT:
-				direction = RIGHT;
-				break;
 			case KEY_LEFT:
-				direction = LEFT;
-				break;
 			case KEY_DOWN:
-				direction = DOWN;
+				mapKeyToDirection(c, &direction);
 				break;
 			default:
 				break;
