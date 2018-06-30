@@ -4,16 +4,14 @@
 #include "timer.h"
 #include "point.h"
 #include "vector.h"
-const int MEMORY_EXPANSE_RATE = 20;// Changing this variable effects optimization, but not behavior
+#include "snake.h"
+typedef SnakeSettings Settings;
+
+// On screen characters
 const char SNAKE_HEAD = 'O';
 const char SNAKE_BODY_VERTICAL = '|';
 const char SNAKE_BODY_HORIZONTAL = '-';
 const char SNAKE_FOOD = '$';
-const int MAX_FOODS = 1;
-
-// Set up/clean up curses stuff
-void initGame();
-void cleanupGame();
 
 // Utility function that we can't really decouple
 // Find an equivalent point in a vector
@@ -30,25 +28,32 @@ void advanceSnake(Vector* snake, Direction direction);
 // Add new food item to game
 void addFood(Vector* foods, Vector* snake);
 
+long getVerticalDelay(Settings* settings, long delay);
+long getHorizontalDelay(Settings* settings, long delay);
 
-int main()
+
+void startSnake(SnakeSettings* settings)
 {
-	initGame();
+	if(settings->window==NULL)
+		settings->window=stdscr;
 
 	Direction direction = DOWN;
+	long snake_delay = settings->initial_snake_delay;
 
-	Timer snake_vertical_timer = constructTimer(75);
-	Timer snake_horizontal_timer = constructTimer(40);
-	Timer food_timer = constructTimer(500);
+	Timer snake_vertical_timer = constructTimer(
+			getVerticalDelay(settings, snake_delay));
+	Timer snake_horizontal_timer = constructTimer(
+			getHorizontalDelay(settings, snake_delay));
+	Timer food_timer = constructTimer(settings->food_delay);
 
 	// Make initial snake
 	Vector snake_parts =
-		constructComplexVector(MEMORY_EXPANSE_RATE);
+		constructComplexVector(settings->memory_expanse_rate);
 	pushOntoVector(&snake_parts, constructPointDynamically(0,0));
 
 	// Initial food
 	Vector foods =
-		constructComplexVector(MEMORY_EXPANSE_RATE);
+		constructComplexVector(settings->memory_expanse_rate);
 	addFood(&foods, &snake_parts);
 
 
@@ -69,7 +74,7 @@ int main()
 		}
 
 		// Here we create random food particles for the snake to eat
-		if(checkTimer(&food_timer) && foods.length < MAX_FOODS)
+		if(checkTimer(&food_timer) && foods.length < settings->max_foods)
 		{
 			addFood(&foods, &snake_parts);
 		}
@@ -100,8 +105,6 @@ int main()
 
 	destroyVector(&snake_parts);
 	destroyVector(&foods);
-	cleanupGame();
-
 }
 
 void advanceSnake(Vector* snake, Direction direction)
@@ -138,21 +141,6 @@ void advanceSnake(Vector* snake, Direction direction)
 						
 	}
 	refresh();
-}
-
-void initGame()
-{
-	initscr();
-	cbreak();
-	keypad(stdscr, TRUE);
-	noecho();
-	curs_set(0);
-	refresh();
-}
-
-void cleanupGame()
-{
-	endwin();
 }
 
 void mapKeyToDirection(int key, Direction* direction)
@@ -197,4 +185,13 @@ void addFood(Vector* foods, Vector* snake)
 	mvaddch(new_food->y, new_food->x, SNAKE_FOOD);
 
 	pushOntoVector(foods, new_food);
+}
+
+long getVerticalDelay(Settings* settings, long delay)
+{
+	return delay;
+}
+long getHorizontalDelay(Settings* settings, long delay)
+{
+	return delay * settings->snake_delay_ratio;
 }

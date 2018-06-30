@@ -1,7 +1,7 @@
 EXECUTABLE = a.elf
 TEST_EXECUTABLE = test.elf
 
-LIB_OBJECTS = timer.o point.o vector.o
+LIB_OBJECTS = timer.o point.o vector.o main.o
 OBJECTS = snake.o $(LIB_OBJECTS)
 TEST_OBJECTS = test.o $(LIB_OBJECTS)
 
@@ -13,5 +13,5 @@ test: $(TEST_OBJECTS) test.o
 	$(CXX) $(TEST_OBJECTS) $(CFLAGS) -o $(TEST_EXECUTABLE)
 	./$(TEST_EXECUTABLE)
 clean:
-	rm *.o *.elf
+	rm -f *.o *.elf
 
