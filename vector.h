@@ -21,6 +21,9 @@ void pushOntoVector(Vector* v, void* datum);
 // Same thing, except in front
 void pushInFrontOfVector(Vector* v, void* datum);
 
+// Remove particular item from vector
+void removeFromVector(Vector* v, int index);
+
 // Pop last member
 void popOffVector(Vector* v);
 

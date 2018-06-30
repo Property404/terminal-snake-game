@@ -6,8 +6,10 @@
 #include "vector.h"
 const int MEMORY_EXPANSE_RATE = 20;// Changing this variable effects optimization, but not behavior
 const char SNAKE_HEAD = 'O';
+const char SNAKE_BODY_VERTICAL = '|';
+const char SNAKE_BODY_HORIZONTAL = '-';
 const char SNAKE_FOOD = '$';
-const int MAX_FOODS = 4;
+const int MAX_FOODS = 1;
 
 // Set up/clean up curses stuff
 void initGame();
@@ -16,35 +18,17 @@ void cleanupGame();
 // Utility function that we can't really decouple
 // Find an equivalent point in a vector
 // Return -1 if unable to find, else return the index
-int findPointInVector(Vector* v, Point* p)
-{
-	for(int i=0;i<v->length;i++)
-	{
-		Point* vp = accessVector(v, i);
-		if(vp->x == p->x && vp->y == p->y)
-			return i;
-	}
-	return -1;
-}
+int findPointInVector(Vector* v, Point* p);
 
-void mapKeyToDirection(int key, Direction* direction)
-{
-	const Direction directions[] =
-	{DOWN, UP, LEFT, RIGHT};
-	const int index = key - KEY_DOWN;
-	if (index > 3 || index < 0)
-	{
-		fprintf(stderr, "Out of bounds in mapKeyToDirection()\n");
-		exit(1);
-	}
-	Direction new_direction = directions[index];
-	if(*direction == -new_direction)
-		return;
-	*direction = new_direction;
-}
+// Move in the direction of "key"(being an arrow key)
+// But don't allow moving backwards directly
+void mapKeyToDirection(int key, Direction* direction);
 
 // Move (and draw) snake in specific direction
 void advanceSnake(Vector* snake, Direction direction);
+
+// Add new food item to game
+void addFood(Vector* foods, Vector* snake);
 
 
 int main()
@@ -55,15 +39,18 @@ int main()
 
 	Timer snake_vertical_timer = constructTimer(75);
 	Timer snake_horizontal_timer = constructTimer(40);
-	Timer food_timer = constructTimer(1000);
+	Timer food_timer = constructTimer(500);
 
+	// Make initial snake
 	Vector snake_parts =
 		constructComplexVector(MEMORY_EXPANSE_RATE);
+	pushOntoVector(&snake_parts, constructPointDynamically(0,0));
+
+	// Initial food
 	Vector foods =
 		constructComplexVector(MEMORY_EXPANSE_RATE);
+	addFood(&foods, &snake_parts);
 
-	// Make head
-	pushOntoVector(&snake_parts, constructPointDynamically(0,0));
 
 	while(true)
 	{
@@ -84,19 +71,7 @@ int main()
 		// Here we create random food particles for the snake to eat
 		if(checkTimer(&food_timer) && foods.length < MAX_FOODS)
 		{
-			int max_y, max_x;
-			getmaxyx(stdscr, max_y, max_x);
-
-			Point* new_food = constructPointDynamically(0, 0);
-			do
-			{
-				new_food->x = rand() % max_x;
-				new_food->y = rand() % max_y;
-			} while(findPointInVector(&snake_parts, new_food) != -1);
-
-			mvaddch(new_food->y, new_food->x, SNAKE_FOOD);
-
-			pushOntoVector(&foods, new_food);
+			addFood(&foods, &snake_parts);
 		}
 
 		// Here we are handling the movement of the snake
@@ -117,6 +92,7 @@ int main()
 			{
 				pushOntoVector(&snake_parts,
 						constructPointDynamically(0,0));
+				removeFromVector(&foods, food_index);
 			}
 		}
 
@@ -177,4 +153,48 @@ void initGame()
 void cleanupGame()
 {
 	endwin();
+}
+
+void mapKeyToDirection(int key, Direction* direction)
+{
+	const Direction directions[] =
+	{DOWN, UP, LEFT, RIGHT};
+	const int index = key - KEY_DOWN;
+	if (index > 3 || index < 0)
+	{
+		fprintf(stderr, "Out of bounds in mapKeyToDirection()\n");
+		exit(1);
+	}
+	Direction new_direction = directions[index];
+	if(*direction == -new_direction)
+		return;
+	*direction = new_direction;
+}
+
+int findPointInVector(Vector* v, Point* p)
+{
+	for(int i=0;i<v->length;i++)
+	{
+		Point* vp = accessVector(v, i);
+		if(vp->x == p->x && vp->y == p->y)
+			return i;
+	}
+	return -1;
+}
+
+void addFood(Vector* foods, Vector* snake)
+{
+	int max_y, max_x;
+	getmaxyx(stdscr, max_y, max_x);
+
+	Point* new_food = constructPointDynamically(0, 0);
+	do
+	{
+		new_food->x = rand() % max_x;
+		new_food->y = rand() % max_y;
+	} while(findPointInVector(snake, new_food) != -1);
+
+	mvaddch(new_food->y, new_food->x, SNAKE_FOOD);
+
+	pushOntoVector(foods, new_food);
 }

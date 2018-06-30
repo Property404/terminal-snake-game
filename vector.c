@@ -70,6 +70,22 @@ void pushOntoVector(Vector* v, void* datum)
 	v->length++;
 }
 
+void removeFromVector(Vector* v, int index)
+{
+	errorIf(index<0 || index >=v->length,
+			"Out of bounds in removeFromVector()");
+
+	if(v->cleanup_data)
+		free(v->data[index]);
+
+	v->length--;
+
+	for(int i=index;i<v->length;i++)
+	{
+		v->data[i] = v->data[i+1];
+	}
+}
+
 void popOffVector(Vector* v)
 {
 	v->length--;
