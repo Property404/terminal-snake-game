@@ -1,15 +1,7 @@
 #include "vector.h"
+#include "error.h"
 #include <stdlib.h>
 #include <stdio.h>
-
-static inline void errorIf(bool condition, const char* msg)
-{
-	if(condition)
-	{
-		fprintf(stderr, "%s\n", msg);
-		exit(1);
-	}
-}
 
 static Vector constructVector(int expanse_rate, bool cleanup_data)
 {

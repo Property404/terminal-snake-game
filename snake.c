@@ -5,6 +5,7 @@
 #include "point.h"
 #include "vector.h"
 #include "snake.h"
+#include "error.h"
 typedef SnakeSettings Settings;
 
 // On screen characters
