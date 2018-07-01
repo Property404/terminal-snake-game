@@ -13,6 +13,10 @@ static const char SNAKE_BODY_VERTICAL = '|';
 static const char SNAKE_BODY_HORIZONTAL = '-';
 static const char SNAKE_FOOD = '$';
 
+// Score parameters
+static const int MIN_SCORE_INCREASE = 10;
+static const int MAX_SCORE_INCREASE = 70;
+
 // Utility function that we can't really decouple
 // Find an equivalent point in a vector
 // Return -1 if unable to find, else return the index
@@ -25,15 +29,19 @@ static int rfindPointInVector(const Vector* v, const Point* p);
 static void mapKeyToDirection(int key, Direction* direction);
 
 // Move (and draw) snake in specific direction
-static void advanceSnake(Settings* settings, Vector* snake, Direction direction);
+static void advanceSnake(const Settings*, Vector* snake, Direction direction);
 
 // Add new food item to game
-static void addFood(Settings* settings, Vector* foods, Vector* snake);
+static void addFood(const Settings*, Vector* foods, const Vector* snake);
 
-static long getVerticalDelay(Settings* settings, long delay);
-static long getHorizontalDelay(Settings* settings, long delay);
+static long getVerticalDelay(const Settings*, long delay);
+static long getHorizontalDelay(const Settings* , long delay);
 
-static bool hasLost(const Settings* settings, const Vector* snake);
+static bool hasLost(const Settings*, const Vector* snake);
+
+static int getMaxWidth(const Settings* s);
+static int getMaxHeight(const Settings* s);
+static void showScore(const Settings* s, int score);
 
 
 
@@ -54,6 +62,7 @@ int startSnake(SnakeSettings* settings)
 		constructTimer(settings->speed_increase_period);
 
 	int score = 0;
+	showScore(settings, score);
 
 	// Make initial snake
 	Vector snake_parts =
@@ -98,7 +107,13 @@ int startSnake(SnakeSettings* settings)
 		if(checkTimer(&food_timer) && foods.length < settings->max_foods)
 		{
 			addFood(settings, &foods, &snake_parts);
-			score++;
+
+			int score_increase = MAX_SCORE_INCREASE-snake_delay;
+			if(score_increase<MIN_SCORE_INCREASE)
+				score_increase = MIN_SCORE_INCREASE;
+			score+=score_increase;
+
+			showScore(settings, score);
 		}
 
 		// Here we are handling the movement of the snake
@@ -137,7 +152,7 @@ int startSnake(SnakeSettings* settings)
 	return score;
 }
 
-static void advanceSnake(Settings* settings, Vector* snake, Direction direction)
+static void advanceSnake(const Settings* s, Vector* snake, Direction direction)
 {
 	assert(snake->length > 0);
 	assert(accessVector(snake, 0) != NULL);
@@ -153,12 +168,12 @@ static void advanceSnake(Settings* settings, Vector* snake, Direction direction)
 
 	// Cover up and delete last body part
 	Point* old_pos = accessVector(snake, snake->length - 1);
-	mvwaddch(settings->window, old_pos->y, old_pos->x, ' ');
+	mvwaddch(s->window, old_pos->y, old_pos->x, ' ');
 	popOffVector(snake);
 
 
 	// Draw new head
-	mvwaddch(settings->window, new_pos.y, new_pos.x, SNAKE_HEAD);
+	mvwaddch(s->window, new_pos.y, new_pos.x, SNAKE_HEAD);
 
 	// And new neck
 	if(snake->length > 1)
@@ -167,7 +182,7 @@ static void advanceSnake(Settings* settings, Vector* snake, Direction direction)
 		Point* prev_p = accessVector(snake, 0);
 		// Display a different character based on going vertically or
 		// horizontally
-		mvwaddch(settings->window, p->y, p->x, (p->x == prev_p->x)?
+		mvwaddch(s->window, p->y, p->x, (p->x == prev_p->x)?
 				SNAKE_BODY_VERTICAL : SNAKE_BODY_HORIZONTAL);
 						
 	}
@@ -217,10 +232,10 @@ static int rfindPointInVector(const Vector*v, const Point* p)
 	return -1;
 }
 
-static void addFood(Settings* settings, Vector* foods, Vector* snake)
+static void addFood(const Settings* s, Vector* foods, const Vector* snake)
 {
-	int max_y, max_x;
-	getmaxyx(settings->window, max_y, max_x);
+	const int max_x = getMaxWidth(s);
+	const int max_y = getMaxHeight(s);
 
 	Point* new_food = constructPointDynamically(0, 0);
 	do
@@ -229,25 +244,25 @@ static void addFood(Settings* settings, Vector* foods, Vector* snake)
 		new_food->y = rand() % max_y;
 	} while(findPointInVector(snake, new_food) != -1);
 
-	mvwaddch(settings->window, new_food->y, new_food->x, SNAKE_FOOD);
+	mvwaddch(s->window, new_food->y, new_food->x, SNAKE_FOOD);
 
 	pushOntoVector(foods, new_food);
 }
 
-static long getVerticalDelay(Settings* settings, long delay)
+static long getVerticalDelay(const Settings* s, long delay)
 {
-	return delay * settings->snake_delay_ratio;
+	return delay * s->snake_delay_ratio;
 }
-static long getHorizontalDelay(Settings* settings, long delay)
+static long getHorizontalDelay(const Settings* s, long delay)
 {
-	(void)settings;//silence warning
+	(void)s;//silence warning
 	return delay;
 }
 
 static bool hasLost(const Settings* s, const Vector* snake)
 {
-	int max_x, max_y;
-	getmaxyx(s->window, max_y, max_x);
+	const int max_x = getMaxWidth(s);
+	const int max_y = getMaxHeight(s);
 
 	const Point* head_pos = accessVector(snake, 0);
 	if(
@@ -259,4 +274,64 @@ static bool hasLost(const Settings* s, const Vector* snake)
 		return true;
 	}
 	return false;
+}
+
+#define SCORE_BAR_SIZE 2
+
+static void displayString(const Settings* s, int x, int y,
+		const char* format, ...)
+{
+	va_list argptr;
+	va_start (argptr, format);
+	wmove(s->window, y, x);
+	vwprintw(s->window,format, argptr);
+	va_end(argptr);
+}
+
+static void drawScoreBar(const Settings* s)
+{
+	// Only do this once
+	static bool drawn = false;
+	if(drawn)
+		return;
+	drawn = true;
+
+	// Draw seperator line
+	const int max_width = getMaxWidth(s);
+	char line[max_width+1];
+	for(int i=0;i<=max_width;i++)
+	{
+		line[i] = '=';
+	}
+	line[max_width] = '\0';
+	displayString(s, 0, getMaxHeight(s), line);
+}
+
+static void showScore(const Settings* s, int score)
+{
+	drawScoreBar(s);
+	displayString(s, getMaxWidth(s)-10, getMaxHeight(s)+1, "Score: %d", score);
+}
+	
+static int getMaxWidth(const Settings* s)
+{
+	static int x = -1;
+	if(x == -1)
+	{
+		int y;
+		getmaxyx(s->window, y, x);
+		(void)y;
+	}
+	return x;
+}
+static int getMaxHeight(const Settings* s)
+{
+	static int y = -1;
+	if(y == -1)
+	{
+		int x;
+		getmaxyx(s->window, y, x);
+		(void)x;
+	}
+	return y-SCORE_BAR_SIZE;
 }
