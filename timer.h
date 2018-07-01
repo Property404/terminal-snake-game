@@ -12,6 +12,9 @@ typedef struct
 // Create a timer with specified delay
 Timer constructTimer(long delay/* in milliseconds*/);
 
+// Change delay time
+void setTimerDelay(Timer* timer, long delay);
+
 // Checks if timer has become "ready." If so, return true and reset timer,
 // otherwise return false
 bool checkTimer(Timer* timer);

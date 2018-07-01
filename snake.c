@@ -23,16 +23,16 @@ int findPointInVector(Vector* v, Point* p);
 void mapKeyToDirection(int key, Direction* direction);
 
 // Move (and draw) snake in specific direction
-void advanceSnake(Vector* snake, Direction direction);
+void advanceSnake(Settings* settings, Vector* snake, Direction direction);
 
 // Add new food item to game
-void addFood(Vector* foods, Vector* snake);
+void addFood(Settings* settings, Vector* foods, Vector* snake);
 
 long getVerticalDelay(Settings* settings, long delay);
 long getHorizontalDelay(Settings* settings, long delay);
 
 
-void startSnake(SnakeSettings* settings)
+int startSnake(SnakeSettings* settings)
 {
 	if(settings->window==NULL)
 		settings->window=stdscr;
@@ -45,6 +45,10 @@ void startSnake(SnakeSettings* settings)
 	Timer snake_horizontal_timer = constructTimer(
 			getHorizontalDelay(settings, snake_delay));
 	Timer food_timer = constructTimer(settings->food_delay);
+	Timer speed_increase_timer =
+		constructTimer(settings->speed_increase_period);
+
+	int score = 0;
 
 	// Make initial snake
 	Vector snake_parts =
@@ -54,7 +58,7 @@ void startSnake(SnakeSettings* settings)
 	// Initial food
 	Vector foods =
 		constructComplexVector(settings->memory_expanse_rate);
-	addFood(&foods, &snake_parts);
+	addFood(settings, &foods, &snake_parts);
 
 
 	while(true)
@@ -73,10 +77,22 @@ void startSnake(SnakeSettings* settings)
 				break;
 		}
 
+		// Let's go faster
+		if(checkTimer(&speed_increase_timer) && snake_delay >
+				settings->minimum_snake_delay)
+		{
+			snake_delay -= settings->speed_increase;
+
+			setTimerDelay(&snake_vertical_timer,
+				getVerticalDelay(settings, snake_delay));
+			setTimerDelay(&snake_horizontal_timer, 
+				getHorizontalDelay(settings, snake_delay));
+		}
+
 		// Here we create random food particles for the snake to eat
 		if(checkTimer(&food_timer) && foods.length < settings->max_foods)
 		{
-			addFood(&foods, &snake_parts);
+			addFood(settings, &foods, &snake_parts);
 		}
 
 		// Here we are handling the movement of the snake
@@ -88,7 +104,7 @@ void startSnake(SnakeSettings* settings)
 				)
 		{
 
-			advanceSnake(&snake_parts, direction);
+			advanceSnake(settings, &snake_parts, direction);
 			int food_index  = findPointInVector(
 					&foods,
 					accessVector(&snake_parts, 0)
@@ -105,9 +121,10 @@ void startSnake(SnakeSettings* settings)
 
 	destroyVector(&snake_parts);
 	destroyVector(&foods);
+	return score;
 }
 
-void advanceSnake(Vector* snake, Direction direction)
+void advanceSnake(Settings* settings, Vector* snake, Direction direction)
 {
 	assert(snake->length > 0);
 	assert(accessVector(snake, 0) != NULL);
@@ -123,12 +140,12 @@ void advanceSnake(Vector* snake, Direction direction)
 
 	// Cover up and delete last body part
 	Point* old_pos = accessVector(snake, snake->length - 1);
-	mvaddch(old_pos->y, old_pos->x, ' ');
+	mvwaddch(settings->window, old_pos->y, old_pos->x, ' ');
 	popOffVector(snake);
 
 
 	// Draw new head
-	mvaddch(new_pos.y, new_pos.x, SNAKE_HEAD);
+	mvwaddch(settings->window, new_pos.y, new_pos.x, SNAKE_HEAD);
 
 	// And new neck
 	if(snake->length > 1)
@@ -137,7 +154,7 @@ void advanceSnake(Vector* snake, Direction direction)
 		Point* prev_p = accessVector(snake, 0);
 		// Display a different character based on going vertically or
 		// horizontally
-		mvaddch(p->y, p->x, (p->x == prev_p->x)?  '|':'-');
+		mvwaddch(settings->window, p->y, p->x, (p->x == prev_p->x)?  '|':'-');
 						
 	}
 	refresh();
@@ -170,10 +187,10 @@ int findPointInVector(Vector* v, Point* p)
 	return -1;
 }
 
-void addFood(Vector* foods, Vector* snake)
+void addFood(Settings* settings, Vector* foods, Vector* snake)
 {
 	int max_y, max_x;
-	getmaxyx(stdscr, max_y, max_x);
+	getmaxyx(settings->window, max_y, max_x);
 
 	Point* new_food = constructPointDynamically(0, 0);
 	do
@@ -182,16 +199,17 @@ void addFood(Vector* foods, Vector* snake)
 		new_food->y = rand() % max_y;
 	} while(findPointInVector(snake, new_food) != -1);
 
-	mvaddch(new_food->y, new_food->x, SNAKE_FOOD);
+	mvwaddch(settings->window, new_food->y, new_food->x, SNAKE_FOOD);
 
 	pushOntoVector(foods, new_food);
 }
 
 long getVerticalDelay(Settings* settings, long delay)
 {
-	return delay;
+	return delay * settings->snake_delay_ratio;
 }
 long getHorizontalDelay(Settings* settings, long delay)
 {
-	return delay * settings->snake_delay_ratio;
+	(void)settings;//silence warning
+	return delay;
 }

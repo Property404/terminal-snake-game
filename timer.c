@@ -27,6 +27,11 @@ Timer constructTimer(long delay)
 	return t;
 }
 
+void setTimerDelay(Timer* timer, long delay)
+{
+	timer->delay = 1000000*delay;
+}
+
 // Return true if time for this to happen)
 bool checkTimer(Timer* timer)
 {
