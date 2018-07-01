@@ -94,7 +94,7 @@ void popOffVector(Vector* v)
 		free(v->data[v->length]);
 }
 
-void* accessVector(Vector* v, int index)
+void* accessVector(const Vector* v, int index)
 {
 	errorIf(index<0 || index >= v->length,
 			"Out of bounds in accessVector");

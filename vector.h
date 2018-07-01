@@ -28,7 +28,7 @@ void removeFromVector(Vector* v, int index);
 void popOffVector(Vector* v);
 
 // Access vector at index
-void* accessVector(Vector* v, int index);
+void* accessVector(const Vector* v, int index);
 
 // Perform any cleanup needed
 void destroyVector(Vector* v);

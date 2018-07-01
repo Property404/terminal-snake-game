@@ -8,28 +8,33 @@
 typedef SnakeSettings Settings;
 
 // On screen characters
-const char SNAKE_HEAD = 'O';
-const char SNAKE_BODY_VERTICAL = '|';
-const char SNAKE_BODY_HORIZONTAL = '-';
-const char SNAKE_FOOD = '$';
+static const char SNAKE_HEAD = 'O';
+static const char SNAKE_BODY_VERTICAL = '|';
+static const char SNAKE_BODY_HORIZONTAL = '-';
+static const char SNAKE_FOOD = '$';
 
 // Utility function that we can't really decouple
 // Find an equivalent point in a vector
 // Return -1 if unable to find, else return the index
-int findPointInVector(Vector* v, Point* p);
+static int findPointInVector(const Vector* v, const Point* p);
+// Same but in reverse order
+static int rfindPointInVector(const Vector* v, const Point* p);
 
 // Move in the direction of "key"(being an arrow key)
 // But don't allow moving backwards directly
-void mapKeyToDirection(int key, Direction* direction);
+static void mapKeyToDirection(int key, Direction* direction);
 
 // Move (and draw) snake in specific direction
-void advanceSnake(Settings* settings, Vector* snake, Direction direction);
+static void advanceSnake(Settings* settings, Vector* snake, Direction direction);
 
 // Add new food item to game
-void addFood(Settings* settings, Vector* foods, Vector* snake);
+static void addFood(Settings* settings, Vector* foods, Vector* snake);
 
-long getVerticalDelay(Settings* settings, long delay);
-long getHorizontalDelay(Settings* settings, long delay);
+static long getVerticalDelay(Settings* settings, long delay);
+static long getHorizontalDelay(Settings* settings, long delay);
+
+static bool hasLost(const Settings* settings, const Vector* snake);
+
 
 
 int startSnake(SnakeSettings* settings)
@@ -93,6 +98,7 @@ int startSnake(SnakeSettings* settings)
 		if(checkTimer(&food_timer) && foods.length < settings->max_foods)
 		{
 			addFood(settings, &foods, &snake_parts);
+			score++;
 		}
 
 		// Here we are handling the movement of the snake
@@ -105,9 +111,16 @@ int startSnake(SnakeSettings* settings)
 		{
 
 			advanceSnake(settings, &snake_parts, direction);
-			int food_index  = findPointInVector(
+			const Point* head_pos = accessVector(&snake_parts, 0);
+
+			// Lost?
+			if(hasLost(settings, &snake_parts))
+				break;
+
+			// See if we gobbled any food
+			const int food_index  = findPointInVector(
 					&foods,
-					accessVector(&snake_parts, 0)
+					head_pos
 					);
 			if(food_index != -1)
 			{
@@ -124,7 +137,7 @@ int startSnake(SnakeSettings* settings)
 	return score;
 }
 
-void advanceSnake(Settings* settings, Vector* snake, Direction direction)
+static void advanceSnake(Settings* settings, Vector* snake, Direction direction)
 {
 	assert(snake->length > 0);
 	assert(accessVector(snake, 0) != NULL);
@@ -154,13 +167,14 @@ void advanceSnake(Settings* settings, Vector* snake, Direction direction)
 		Point* prev_p = accessVector(snake, 0);
 		// Display a different character based on going vertically or
 		// horizontally
-		mvwaddch(settings->window, p->y, p->x, (p->x == prev_p->x)?  '|':'-');
+		mvwaddch(settings->window, p->y, p->x, (p->x == prev_p->x)?
+				SNAKE_BODY_VERTICAL : SNAKE_BODY_HORIZONTAL);
 						
 	}
 	refresh();
 }
 
-void mapKeyToDirection(int key, Direction* direction)
+static void mapKeyToDirection(int key, Direction* direction)
 {
 	const Direction directions[] =
 	{DOWN, UP, LEFT, RIGHT};
@@ -176,18 +190,34 @@ void mapKeyToDirection(int key, Direction* direction)
 	*direction = new_direction;
 }
 
-int findPointInVector(Vector* v, Point* p)
+static inline bool matchesPointInVector(const Vector* v, const Point* p, int i)
+{
+	Point* vp = accessVector(v, i);
+	if(vp->x == p->x && vp->y == p->y)
+		return true;
+	return false;
+}
+static int findPointInVector(const Vector* v, const Point* p)
 {
 	for(int i=0;i<v->length;i++)
 	{
-		Point* vp = accessVector(v, i);
-		if(vp->x == p->x && vp->y == p->y)
+		if(matchesPointInVector(v, p, i))
 			return i;
 	}
 	return -1;
 }
 
-void addFood(Settings* settings, Vector* foods, Vector* snake)
+static int rfindPointInVector(const Vector*v, const Point* p)
+{
+	for(int i=v->length -1; i>=0;i--)
+	{
+		if(matchesPointInVector(v, p, i))
+			return i;
+	}
+	return -1;
+}
+
+static void addFood(Settings* settings, Vector* foods, Vector* snake)
 {
 	int max_y, max_x;
 	getmaxyx(settings->window, max_y, max_x);
@@ -204,12 +234,29 @@ void addFood(Settings* settings, Vector* foods, Vector* snake)
 	pushOntoVector(foods, new_food);
 }
 
-long getVerticalDelay(Settings* settings, long delay)
+static long getVerticalDelay(Settings* settings, long delay)
 {
 	return delay * settings->snake_delay_ratio;
 }
-long getHorizontalDelay(Settings* settings, long delay)
+static long getHorizontalDelay(Settings* settings, long delay)
 {
 	(void)settings;//silence warning
 	return delay;
+}
+
+static bool hasLost(const Settings* s, const Vector* snake)
+{
+	int max_x, max_y;
+	getmaxyx(s->window, max_y, max_x);
+
+	const Point* head_pos = accessVector(snake, 0);
+	if(
+			rfindPointInVector(snake, head_pos)
+			|| (head_pos->x<0 || head_pos->x>=max_x)
+			|| (head_pos->y<0 || head_pos->y>=max_y)
+	  )
+	{
+		return true;
+	}
+	return false;
 }

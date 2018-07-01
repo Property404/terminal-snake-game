@@ -10,16 +10,18 @@ int main()
 	initCurses();
 
 	SnakeSettings settings = DEFAULT_SNAKE_SETTINGS;
-	assert(settings.speed_increase == 0);
+
 	settings.initial_snake_delay = 70,
 	settings.minimum_snake_delay = 20,
 	settings.snake_delay_ratio = 1.4;
 	settings.speed_increase = 1;
 	settings.speed_increase_period = 30000;
 	
-	startSnake(&settings);
+	int score = startSnake(&settings);
 
 	cleanupCurses();
+
+	printf("GAME OVER\nScore: %d\n", score);
 
 }
 
