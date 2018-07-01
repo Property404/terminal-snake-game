@@ -310,7 +310,9 @@ static void drawScoreBar(const Settings* s)
 static void showScore(const Settings* s, int score)
 {
 	drawScoreBar(s);
-	displayString(s, getMaxWidth(s)-10, getMaxHeight(s)+1, "Score: %d", score);
+	int score_size = 12;
+
+	displayString(s, getMaxWidth(s)-score_size, getMaxHeight(s)+1, "Score: %d ", score);
 }
 	
 static int getMaxWidth(const Settings* s)
