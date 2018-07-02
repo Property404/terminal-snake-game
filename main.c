@@ -1,5 +1,6 @@
 #include "snake.h"
 #include "assert.h"
+#include "highscore.h"
 
 // Set up/clean up curses stuff
 void initCurses();
@@ -10,7 +11,6 @@ int main()
 	initCurses();
 
 	SnakeSettings settings = DEFAULT_SNAKE_SETTINGS;
-
 	settings.initial_snake_delay = 70,
 	settings.minimum_snake_delay = 20,
 	settings.snake_delay_ratio = 1.4;
@@ -18,11 +18,13 @@ int main()
 	settings.speed_increase_period = 30000;
 	
 	int score = startSnake(&settings);
-
+	
 	cleanupCurses();
 
-	printf("GAME OVER\nScore: %d\n", score);
-
+	puts("Game over\n---------");
+	if(isHighScore(score))
+		puts("New high score!");
+	printf("Score: %d\n", score);
 }
 
 void initCurses()

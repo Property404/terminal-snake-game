@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include <assert.h>
 #include <stdlib.h>
+#include "highscore.h"
 #include "timer.h"
 #include "point.h"
 #include "vector.h"
@@ -50,6 +51,8 @@ int startSnake(SnakeSettings* settings)
 {
 	if(settings->window==NULL)
 		settings->window=stdscr;
+
+	srand(time(NULL));
 
 	Direction direction = DOWN;
 	long snake_delay = settings->initial_snake_delay;
@@ -195,11 +198,10 @@ static void mapKeyToDirection(int key, Direction* direction)
 	const Direction directions[] =
 	{DOWN, UP, LEFT, RIGHT};
 	const int index = key - KEY_DOWN;
-	if (index > 3 || index < 0)
-	{
-		fprintf(stderr, "Out of bounds in mapKeyToDirection()\n");
-		exit(1);
-	}
+
+	errorIf(index>3 || index<0,
+		"Out of bounds in mapKeyToDirection()");
+
 	Direction new_direction = directions[index];
 	if(*direction == -new_direction)
 		return;
@@ -306,6 +308,8 @@ static void drawScoreBar(const Settings* s)
 	}
 	line[max_width] = '\0';
 	displayString(s, 0, getMaxHeight(s), line);
+	displayString(s, 0, getMaxHeight(s)+1, "High Score: %d",
+			getHighScore());
 }
 
 static void showScore(const Settings* s, int score)

@@ -11,6 +11,7 @@ void errorIf(bool condition, const
 		va_start(argptr, format);
 		vfprintf(stderr, format, argptr);
 		va_end(argptr);
+		fputc('\n', stderr);
 		exit(1);
 	}
 }

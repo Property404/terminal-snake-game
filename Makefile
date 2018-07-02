@@ -1,7 +1,7 @@
 EXECUTABLE = a.elf
 TEST_EXECUTABLE = test.elf
 
-LIB_OBJECTS = timer.o point.o vector.o snake.o error.o
+LIB_OBJECTS = timer.o point.o vector.o snake.o error.o highscore.c
 OBJECTS = main.o $(LIB_OBJECTS)
 TEST_OBJECTS = test.o $(LIB_OBJECTS)
 
