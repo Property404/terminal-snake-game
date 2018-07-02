@@ -54,6 +54,8 @@ int startSnake(SnakeSettings* settings)
 
 	srand(time(NULL));
 
+	timeout(0);
+
 	Direction direction = DOWN;
 	long snake_delay = settings->initial_snake_delay;
 
@@ -81,7 +83,6 @@ int startSnake(SnakeSettings* settings)
 
 	while(true)
 	{
-		timeout(0);
 		int c = getch();
 		switch(c)
 		{
@@ -91,6 +92,12 @@ int startSnake(SnakeSettings* settings)
 			case KEY_DOWN:
 				mapKeyToDirection(c, &direction);
 				break;
+			case 'p':
+			case 'P':
+			case ' ':
+				timeout(-1);
+				c=getch();
+				timeout(0);
 			default:
 				break;
 		}
