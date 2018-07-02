@@ -41,5 +41,5 @@ uninstall:
 	rm $(INSTALL_DIR)/$(EXECUTABLE)
 
 clean:
-	rm -f *.o *.elf
+	rm -f *.o *.elf $(EXECUTABLE)
 
