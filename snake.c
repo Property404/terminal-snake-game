@@ -16,7 +16,7 @@ static const char SNAKE_BODY_HORIZONTAL = '-';
 static const char SNAKE_FOOD = '$';
 
 // Score parameters
-static const int MIN_SCORE_INCREASE = 10;
+static const int MIN_SCORE_INCREASE = 5;
 static const int MAX_SCORE_INCREASE = 70;
 
 // Utility function that we can't really decouple
@@ -315,7 +315,7 @@ static void drawScoreBar(const Settings* s)
 static void showScore(const Settings* s, int score)
 {
 	drawScoreBar(s);
-	int score_size = 12;
+	const int score_size = 12;
 
 	displayString(s, getMaxWidth(s)-score_size, getMaxHeight(s)+1, "Score: %d ", score);
 }
