@@ -250,8 +250,8 @@ static void addFood(const Settings* s, Vector* foods, const Vector* snake)
 	Point* new_food = constructPointDynamically(0, 0);
 	do
 	{
-		new_food->x = rand() % max_x;
-		new_food->y = rand() % max_y;
+		new_food->x = rand() % (max_x-2) + 1;
+		new_food->y = rand() % (max_y-2) + 1;
 	} while(findPointInVector(snake, new_food) != -1);
 
 	mvwaddch(s->window, new_food->y, new_food->x, SNAKE_FOOD);
