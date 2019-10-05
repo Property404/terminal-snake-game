@@ -9,12 +9,12 @@ LIB_OBJECTS = timer.o point.o vector.o snake.o error.o highscore.c
 OBJECTS = main.o $(LIB_OBJECTS)
 TEST_OBJECTS = test.o $(LIB_OBJECTS)
 
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -lcurses
+CFLAGS = -Wall -Wextra -pedantic -std=gnu11 -lcurses
 
 MAKE = $(CC) $(OBJECTS) $(CFLAGS) -o $(EXECUTABLE)
 
 
-debug: CFLAGS += -Og
+debug: CFLAGS += -Og -g3
 debug: executable
 
 release: CFLAGS += -O2 --lto
