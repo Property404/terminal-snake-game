@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <unistd.h>
 #include <assert.h>
 #include <stdlib.h>
 #include "highscore.h"
@@ -155,6 +156,9 @@ int startSnake(SnakeSettings* settings)
 				removeFromVector(&foods, food_index);
 			}
 		}
+
+		// Sleep for a bit so we don't hog the CPU
+		usleep(1000);
 
 	}
 
