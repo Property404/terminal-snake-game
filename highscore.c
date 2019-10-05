@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include "highscore.h"
 #include "error.h"
+#define HIGHSCORE_DIRECTORY (getPath())
+#define HIGHSCORE_FILE  (getFilename())
 
 static char* getPath()
 {
@@ -28,8 +30,7 @@ static char* getFilename()
 	snprintf(filename, sizeof(filename), FILENAME_TEMPLATE, getPath());
 	return filename;
 }
-#define HIGHSCORE_DIRECTORY (getPath())
-#define HIGHSCORE_FILE  (getFilename())
+
 
 static FILE* hs_open(const char* mode, const char* error_msg)
 {
@@ -70,13 +71,16 @@ static void createIfNotExists(void)
 	}
 }
 
+
 int getHighScore(void)
 {
 	const char*const FAIL_MESSAGE = "Failed to extract high score";
-
 	int hs;
+	FILE* fp;
 
-	FILE* fp = hs_open("r", FAIL_MESSAGE);
+	createIfNotExists();
+
+	fp = hs_open("r", FAIL_MESSAGE);
 	errorIf(0>fscanf(fp, "%d", &hs), FAIL_MESSAGE);
 	hs_close(fp, FAIL_MESSAGE);
 
@@ -86,8 +90,6 @@ int getHighScore(void)
 
 bool isHighScore(int score)
 {
-	createIfNotExists();
-
 	if(score>getHighScore())
 	{
 		setHighScore(score);
